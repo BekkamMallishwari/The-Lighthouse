@@ -115,11 +115,9 @@ function handleScroll() {
     nav.classList.toggle("scrolled", currentScroll > 50);
   }
 
-  if (!isTouchDevice && !prefersReducedMotionMQ.matches) {
+  if (!isTouchDevice) {
     if (heroBg) {
-      const maxShift = window.innerHeight * 0.3;
-      const shift = Math.min(currentScroll * 0.35, maxShift);
-      heroBg.style.setProperty("--parallax-y", `${shift}px`);
+      heroBg.style.transform = `translateY(${currentScroll * 0.5}px)`;
     }
 
     const reservationSection = document.getElementById("reservation");
@@ -226,17 +224,6 @@ function setupThemeToggle() {
 }
 
 // ── Scroll effects & Parallax ──
-// Cached prefers-reduced-motion check (updated on change via matchMedia listener)
-const prefersReducedMotionMQ = window.matchMedia("(prefers-reduced-motion: reduce)");
-let _scrollRafId = null;
-
-prefersReducedMotionMQ.addEventListener("change", () => {
-  // If user switches reduced-motion on mid-session, reset parallax immediately
-  if (prefersReducedMotionMQ.matches && heroBg) {
-    heroBg.style.setProperty("--parallax-y", "0px");
-  }
-});
-
 function handleScroll() {
   const currentScroll = window.scrollY;
 
@@ -252,23 +239,15 @@ function handleScroll() {
     nav.classList.toggle("scrolled", currentScroll > 50);
   }
 
-  // Smooth parallax using rAF — only on non-touch, non-reduced-motion devices
-  if (!isTouchDevice && !prefersReducedMotionMQ.matches) {
-    if (_scrollRafId) cancelAnimationFrame(_scrollRafId);
-    _scrollRafId = requestAnimationFrame(() => {
-      if (heroBg) {
-        // Clamp so hero never scrolls beyond the viewport height
-        const maxShift = window.innerHeight * 0.3;
-        const shift = Math.min(currentScroll * 0.35, maxShift);
-        heroBg.style.setProperty("--parallax-y", `${shift}px`);
-      }
-      const reservationSection = document.getElementById("reservation");
-      if (reservationBg && reservationSection && currentScroll > window.innerHeight) {
-        const offset = (currentScroll - reservationSection.offsetTop) * 0.3;
-        reservationBg.style.transform = `translateY(${offset}px)`;
-      }
-      _scrollRafId = null;
-    });
+  if (!isTouchDevice) {
+    if (heroBg) {
+      heroBg.style.transform = `translateY(${currentScroll * 0.5}px)`;
+    }
+    const reservationSection = document.getElementById("reservation");
+    if (reservationBg && reservationSection && currentScroll > window.innerHeight) {
+      const offset = (currentScroll - reservationSection.offsetTop) * 0.3;
+      reservationBg.style.transform = `translateY(${offset}px)`;
+    }
   }
 
   if (backToTopBtn) {
@@ -349,12 +328,17 @@ function getActiveDiet() {
 function filterMenuItems(filter = 'all', searchText = '', diet = 'all') {
   const menuItems = document.querySelectorAll('.menu-item');
   let visibleCount = 0;
-  const searchStr = searchText || (typeof menuSearch !== 'undefined' && menuSearch ? menuSearch.value.trim() : "");
-  const searchLower = searchStr.toLowerCase();
+  const searchText2 = menuSearch ? menuSearch.value.trim().toLowerCase() : "";
 
   menuItems.forEach((item) => {
     const h3 = item.querySelector('h3');
-    const itemName = (h3 ? h3.textContent : "").toLowerCase();
+    const itemName = h3 ? h3.textContent.toLowerCase() : "";
+    const category = item.dataset.category || "";
+    const type = item.dataset.type || item.dataset.diet || "all";
+  const searchLower = searchText.toLowerCase();
+
+  menuItems.forEach((item) => {
+    const itemName = (item.querySelector('h3')?.textContent || "").toLowerCase();
     const category = item.dataset.category || 'all';
     const itemDiet = item.dataset.diet || item.dataset.type || 'all';
 
@@ -367,10 +351,8 @@ function filterMenuItems(filter = 'all', searchText = '', diet = 'all') {
         h3.dataset.original = h3.innerHTML;
       }
       const originalText = h3.dataset.original;
-      if (searchStr) {
-        // Safe regex construction
-        const escapedSearch = searchStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(${escapedSearch})`, 'gi');
+      if (searchText) {
+        const regex = new RegExp(`(${searchText})`, 'gi');
         h3.innerHTML = originalText.replace(regex, '<span class="search-highlight">$1</span>');
       } else {
         h3.innerHTML = originalText;
@@ -1453,7 +1435,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
     }
   }
-});
+}
 
 function setupOrderFeatures() {
   const menuItems = document.querySelectorAll(".menu-item");
@@ -2023,8 +2005,6 @@ document.addEventListener("DOMContentLoaded", () => {
       modal.style.display = "none";
     }
   });
-});
-
 // Feature 9: Live Table Availability Estimator
 // =============================================
 function setupTableAvailabilityEstimator() {

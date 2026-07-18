@@ -349,12 +349,17 @@ function getActiveDiet() {
 function filterMenuItems(filter = 'all', searchText = '', diet = 'all') {
   const menuItems = document.querySelectorAll('.menu-item');
   let visibleCount = 0;
-  const searchStr = searchText || (typeof menuSearch !== 'undefined' && menuSearch ? menuSearch.value.trim() : "");
-  const searchLower = searchStr.toLowerCase();
+  const searchText2 = menuSearch ? menuSearch.value.trim().toLowerCase() : "";
 
   menuItems.forEach((item) => {
     const h3 = item.querySelector('h3');
-    const itemName = (h3 ? h3.textContent : "").toLowerCase();
+    const itemName = h3 ? h3.textContent.toLowerCase() : "";
+    const category = item.dataset.category || "";
+    const type = item.dataset.type || item.dataset.diet || "all";
+  const searchLower = searchText.toLowerCase();
+
+  menuItems.forEach((item) => {
+    const itemName = (item.querySelector('h3')?.textContent || "").toLowerCase();
     const category = item.dataset.category || 'all';
     const itemDiet = item.dataset.diet || item.dataset.type || 'all';
 
@@ -367,10 +372,8 @@ function filterMenuItems(filter = 'all', searchText = '', diet = 'all') {
         h3.dataset.original = h3.innerHTML;
       }
       const originalText = h3.dataset.original;
-      if (searchStr) {
-        // Safe regex construction
-        const escapedSearch = searchStr.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp(`(${escapedSearch})`, 'gi');
+      if (searchText) {
+        const regex = new RegExp(`(${searchText})`, 'gi');
         h3.innerHTML = originalText.replace(regex, '<span class="search-highlight">$1</span>');
       } else {
         h3.innerHTML = originalText;
@@ -1453,7 +1456,7 @@ document.addEventListener('DOMContentLoaded', () => {
       `).join('');
     }
   }
-});
+}
 
 function setupOrderFeatures() {
   const menuItems = document.querySelectorAll(".menu-item");
@@ -2023,8 +2026,6 @@ document.addEventListener("DOMContentLoaded", () => {
       modal.style.display = "none";
     }
   });
-});
-
 // Feature 9: Live Table Availability Estimator
 // =============================================
 function setupTableAvailabilityEstimator() {
